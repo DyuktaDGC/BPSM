@@ -7,13 +7,16 @@ import Functions from '../../sections/functions/Functions';
 import Dashboards from '../../sections/dashboards/Dashboards';
 import Close from '../../sections/Close';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useMedia, COMPACT } from '../../hooks/useMedia';
 import { useLenis } from '../../hooks/useLenis';
 import { useParallax } from '../../hooks/useParallax';
 
 export default function Home() {
   const reduced = useReducedMotion();
-  useLenis(!reduced);
-  useParallax(!reduced);
+  const compact = useMedia(COMPACT);
+
+  useLenis(!reduced && !compact);
+  useParallax(!reduced && !compact);
 
   return (
     <>

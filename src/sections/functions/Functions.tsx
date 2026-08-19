@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FUNCTIONS } from '../../content/functions';
+import type { Fn } from '../../content/functions';
 import { COPY } from '../../content/copy';
 import { useRoadGeometry } from './useRoadGeometry';
 import { buildTimeline } from './mapScrollToDistance';
@@ -7,6 +8,8 @@ import { useRoadProgress } from './useRoadProgress';
 import { useWalkerState } from './useWalkerState';
 import { useStopJump } from './useStopJump';
 import { useScrollHeight } from './useScrollHeight';
+import { useMedia, COMPACT } from '../../hooks/useMedia';
+import { useReveal } from '../../hooks/useReveal';
 import Road from './Road';
 import Walker from './Walker';
 import FunctionPanel from './FunctionPanel';
@@ -19,7 +22,8 @@ const C = COPY.functions;
 const cameraPoint = () => ({ x: window.innerWidth * 0.3, y: window.innerHeight * 0.66 });
 
 export default function Functions({ reduced }: { reduced: boolean }) {
-  if (reduced) return <FlatList />;
+  const compact = useMedia(COMPACT);
+  if (reduced || compact) return <FlatList reduced={reduced} />;
   return <AnimatedFunctions />;
 }
 
@@ -55,8 +59,6 @@ function AnimatedFunctions() {
     el.style.left = `${camera.x}px`;
     el.style.top = `${camera.y}px`;
   }, [walkerRef, camera]);
-
-
 
   return (
     <section id="functions" className={stop >= 4 ? 'functions functions--dark' : 'functions'} ref={sectionRef}>
@@ -103,15 +105,35 @@ function AnimatedFunctions() {
   );
 }
 
-function FlatList() {
+function FlatList({ reduced }: { reduced: boolean }) {
   return (
     <section id="functions" className="functions functions--flat">
-      <p className="mono soft">{C.kicker}</p>
-      <h2>{C.head}</h2>
-      <p className="soft">{C.sub}</p>
-      {FUNCTIONS.map((fn, i) => (
-        <FunctionPanel key={fn.n} fn={fn} active dark={i >= 4} />
-      ))}
+      <header className="functions__flat-head">
+        <p className="mono soft">{C.kicker}</p>
+        <h2>{C.head}</h2>
+        <p className="functions__sub soft">{C.sub}</p>
+      </header>
+
+      <ol className="functions__flat-list">
+        {FUNCTIONS.map((fn) => (
+          <FlatItem key={fn.n} fn={fn} reduced={reduced} />
+        ))}
+      </ol>
     </section>
+  );
+}
+
+function FlatItem({ fn, reduced }: { fn: Fn; reduced: boolean }) {
+  const { ref, seen } = useReveal<HTMLLIElement>(0.15);
+  const on = reduced || seen;
+
+  return (
+    <li
+      ref={ref}
+      className={`functions__flat-item${on ? ' in' : ''}`}
+      style={{ '--tone': fn.color } as React.CSSProperties}
+    >
+      <FunctionPanel fn={fn} active dark={false} />
+    </li>
   );
 }

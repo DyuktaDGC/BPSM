@@ -25,11 +25,12 @@ const TONES: ReadonlyArray<[selector: string, light: boolean]> = [
 ];
 
 /** Prefixed onto the section anchors so the nav also works from a page that
- *  isn't the landing page — /demos.html passes base="/" to get "/#dashboards". */
+ *  isn't the landing page — /demos passes base="/" to get "/#dashboards". */
 export default function Nav({ base = '' }: { base?: string }) {
   const [shown, setShown] = useState(false);
   const [light, setLight] = useState(false);
   const [tight, setTight] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const t = window.setTimeout(() => setShown(true), DELAY);
@@ -49,6 +50,12 @@ export default function Nav({ base = '' }: { base?: string }) {
       raf = 0;
       const probe = nav.getBoundingClientRect().height / 2;
       setTight(window.scrollY > TIGHTEN_AT);
+
+      const root = document.documentElement;
+      if (!root.classList.contains('lenis-on')) {
+        const max = root.scrollHeight - window.innerHeight;
+        root.style.setProperty('--scroll', max > 0 ? (window.scrollY / max).toFixed(4) : '0');
+      }
 
       let next = false;
       for (const [selector, isLight] of TONES) {
@@ -74,25 +81,94 @@ export default function Nav({ base = '' }: { base?: string }) {
     };
   }, []);
 
-  return (
-    <nav
-      className={['nav', shown && 'in', light && 'nav--light', tight && 'nav--tight']
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <a className="nav__logo" href={`${base}#hero`} aria-label="DGC — home">
-        <img src={logo} alt="" width={34} height={36} />
-      </a>
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const mq = window.matchMedia('(min-width: 761px)');
+    const onWide = () => { if (mq.matches) setOpen(false); };
+    document.body.classList.add('nav-open');
+    window.addEventListener('keydown', onKey);
+    mq.addEventListener('change', onWide);
+    return () => {
+      document.body.classList.remove('nav-open');
+      window.removeEventListener('keydown', onKey);
+      mq.removeEventListener('change', onWide);
+    };
+  }, [open]);
 
-      <div className="nav__links mono">
-        {COPY.nav.links.map((label, i) => (
-          <a key={label} href={`${base}${HREFS[i]}`}>
-            {label}
+  return (
+    <>
+      <nav
+        className={['nav', shown && 'in', light && 'nav--light', tight && 'nav--tight', open && 'nav--open']
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <a className="nav__logo" href={`${base}#hero`} aria-label="DGC — home" onClick={() => setOpen(false)}>
+          <img src={logo} alt="" width={34} height={36} />
+        </a>
+
+        <div className="nav__links mono">
+          {COPY.nav.links.map((label, i) => (
+            <a key={label} href={`${base}${HREFS[i]}`}>
+              {label}
+            </a>
+          ))}
+        </div>
+
+        <div className="nav__end">
+          <Cta label={COPY.nav.cta} href={`${base}${CONTACT}`} where="nav" size="sm" />
+
+          <button
+            type="button"
+            className="nav__burger"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+            aria-controls="nav-menu"
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span /><span /><span />
+          </button>
+        </div>
+      </nav>
+
+      <div
+        id="nav-menu"
+        className={open ? 'navmenu open' : 'navmenu'}
+        hidden={!open}
+      >
+        <div className="navmenu__inner">
+          {COPY.nav.links.map((label, i) => (
+            <a
+              key={label}
+              className="navmenu__link"
+              style={{ transitionDelay: `${60 + i * 55}ms` }}
+              href={`${base}${HREFS[i]}`}
+              onClick={() => setOpen(false)}
+            >
+              <span className="navmenu__i mono">{`0${i + 1}`}</span>
+              {label}
+            </a>
+          ))}
+
+          <a
+            className="navmenu__link navmenu__link--cta"
+            style={{ transitionDelay: `${60 + COPY.nav.links.length * 55}ms` }}
+            href={`${base}${CONTACT}`}
+            onClick={() => setOpen(false)}
+          >
+            <span className="navmenu__i mono">{`0${COPY.nav.links.length + 1}`}</span>
+            {COPY.nav.cta}
           </a>
-        ))}
+        </div>
       </div>
 
-      <Cta label={COPY.nav.cta} href={`${base}${CONTACT}`} where="nav" size="sm" />
-    </nav>
+      <button
+        type="button"
+        className={open ? 'navscrim show' : 'navscrim'}
+        tabIndex={-1}
+        aria-hidden="true"
+        onClick={() => setOpen(false)}
+      />
+    </>
   );
 }

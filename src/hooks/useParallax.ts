@@ -10,6 +10,7 @@ import gsap from 'gsap';
 export function useParallax(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
+    if (window.matchMedia('(max-width: 860px)').matches) return;
 
     const els = gsap.utils.toArray<HTMLElement>('[data-par]');
     if (els.length === 0) return;

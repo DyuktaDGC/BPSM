@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -rn \"from '.*components/Section'\\\\|from '\\\\\\\\./Section'\" src)"
+    ]
+  }
+}

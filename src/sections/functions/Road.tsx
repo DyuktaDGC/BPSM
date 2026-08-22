@@ -6,13 +6,14 @@ import type { Fn } from '../../content/functions';
 import { buildNodes, flagPoint } from './buildPath';
 import Ground from './Ground';
 import { PAD } from './buildGround';
+import type { Stage } from './stage';
 
 type Props = {
   functions: Fn[];
   geometry: RoadGeometry;
   timeline: RoadTimeline;
   onFrame: (fn: FrameFn) => () => void;
-  camera: { x: number; y: number };
+  camera: Stage;
 };
 
 /** Memoised: the section re-renders on every stop change, and without this
@@ -44,7 +45,12 @@ function Road({ functions, geometry, timeline, onFrame, camera }: Props) {
       const distance = distanceAt(timeline, progress);
       const point = path.getPointAtLength(distance);
 
-      const transform = `translate3d(${(camera.x - point.x).toFixed(2)}px, ${(camera.y - point.y).toFixed(2)}px, 0)`;
+      // Scaled about the camera point, so zooming out on a narrow window
+      // shows more road without moving the spot the walker stands on.
+      const s = camera.scale;
+      const transform =
+        `translate3d(${(camera.x - point.x * s).toFixed(2)}px, ${(camera.y - point.y * s).toFixed(2)}px, 0)`
+        + (s === 1 ? '' : ` scale(${s})`);
       if (transform !== lastTransform) {
         lastTransform = transform;
         world.style.transform = transform;

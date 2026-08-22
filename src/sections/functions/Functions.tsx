@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { FUNCTIONS } from '../../content/functions';
 import type { Fn } from '../../content/functions';
 import { COPY } from '../../content/copy';
@@ -8,7 +8,7 @@ import { useRoadProgress } from './useRoadProgress';
 import { useWalkerState } from './useWalkerState';
 import { useStopJump } from './useStopJump';
 import { useScrollHeight } from './useScrollHeight';
-import { useMedia, COMPACT } from '../../hooks/useMedia';
+import { readStage, sameStage, pinHeightOf, type Stage } from './stage';
 import { useReveal } from '../../hooks/useReveal';
 import Road from './Road';
 import Walker from './Walker';
@@ -16,19 +16,16 @@ import FunctionPanel from './FunctionPanel';
 
 const C = COPY.functions;
 
-/** Where the road is pinned on screen. At 0.74 the horizon sat so low that the
- *  top half of the section was an empty sky band; 0.66 pulls the landscape up
- *  under the copy and gives the textured ground the space instead. */
-const cameraPoint = () => ({ x: window.innerWidth * 0.3, y: window.innerHeight * 0.66 });
-
 export default function Functions({ reduced }: { reduced: boolean }) {
-  const compact = useMedia(COMPACT);
-  if (reduced || compact) return <FlatList reduced={reduced} />;
+  // Only reduced motion drops to the static list now. A phone gets the same
+  // walk everyone else does, laid out for a thumb — the road *is* the section.
+  if (reduced) return <FlatList reduced={reduced} />;
   return <AnimatedFunctions />;
 }
 
 function AnimatedFunctions() {
   const sectionRef = useRef<HTMLElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
   const geometry = useRoadGeometry(FUNCTIONS.length);
   const colors = useMemo(() => FUNCTIONS.map((f) => f.color), []);
 
@@ -37,68 +34,92 @@ function AnimatedFunctions() {
     [geometry.nodeLengths, geometry.pathLength],
   );
 
-  useScrollHeight(sectionRef, timeline);
-  const { stop, onFrame } = useRoadProgress(sectionRef, timeline, false);
-  const walkerRef = useWalkerState(onFrame, timeline, geometry.nodeLengths, geometry.pathLength, geometry.pathRef, colors, false);
-  const { jumpTo } = useStopJump(sectionRef, timeline, stop, FUNCTIONS.length);
+  // Every size-dependent number in the section, remeasured together. Keeping
+  // the camera frozen at its mount value drifted the walker off the road as
+  // soon as the window changed size; keeping it separate from the scroll
+  // height let the two disagree about how tall the pinned box was.
+  const [stage, setStage] = useState<Stage>(() => readStage(0));
 
-  // The point on screen the road is pinned under. useScrollHeight already
-  // re-maps the scroll on resize; leaving this frozen at its mount value meant
-  // the walker drifted off the road as soon as the window changed size.
-  const [camera, setCamera] = useState(cameraPoint);
+  useLayoutEffect(() => {
+    const apply = () =>
+      setStage((prev) => {
+        const next = readStage(pinHeightOf(pinRef.current));
+        // A phone fires resize on every URL-bar nudge. Handing back the same
+        // object keeps that from resubscribing the whole frame loop mid-scroll.
+        return sameStage(prev, next) ? prev : next;
+      });
 
-  useEffect(() => {
-    const onResize = () => setCamera(cameraPoint());
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    apply();
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', apply);
+    return () => {
+      window.removeEventListener('resize', apply);
+      window.removeEventListener('orientationchange', apply);
+    };
   }, []);
+
+  useScrollHeight(sectionRef, pinRef, timeline, stage.unit);
+  const { stop, onFrame } = useRoadProgress(sectionRef, pinRef, timeline, false);
+  const walkerRef = useWalkerState(onFrame, timeline, geometry.nodeLengths, geometry.pathLength, geometry.pathRef, colors, false);
+  const { jumpTo } = useStopJump(sectionRef, pinRef, timeline, stop, FUNCTIONS.length);
 
   useEffect(() => {
     const el = walkerRef.current;
     if (!el) return;
-    el.style.left = `${camera.x}px`;
-    el.style.top = `${camera.y}px`;
-  }, [walkerRef, camera]);
+    el.style.left = `${stage.x}px`;
+    el.style.top = `${stage.y}px`;
+    // The rig is drawn at full size but the world around it shrinks on narrow
+    // screens, so it has to come down with it or he ends up straddling the road.
+    el.style.setProperty('--rig', `${stage.scale}`);
+  }, [walkerRef, stage]);
+
+  const className = [
+    'functions',
+    stop >= 4 ? 'functions--dark' : '',
+    stop >= 0 ? 'functions--engaged' : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <section id="functions" className={stop >= 4 ? 'functions functions--dark' : 'functions'} ref={sectionRef}>
-      <div className="functions__pin">
-        <header className="functions__head">
-          <p className="mono soft">{C.kicker}</p>
-          <h2>{C.head}</h2>
-          <p className="functions__sub soft">{C.sub}</p>
-        </header>
-
-        <div className="functions__panels">
-          {FUNCTIONS.map((fn, i) => (
-            <FunctionPanel key={fn.n} fn={fn} active={stop === i} dark={i >= 4} />
-          ))}
-        </div>
-
+    <section id="functions" className={className} ref={sectionRef}>
+      <div className="functions__pin" ref={pinRef}>
         <div className="functions__stage">
           <Road
             functions={FUNCTIONS}
             geometry={geometry}
             timeline={timeline}
             onFrame={onFrame}
-            camera={camera}
+            camera={stage}
           />
           <Walker ref={walkerRef} />
         </div>
 
-        <div className="functions__dots" role="tablist" aria-label="Jump to a function">
-          {FUNCTIONS.map((fn, i) => (
-            <button
-              key={fn.n}
-              type="button"
-              role="tab"
-              aria-selected={stop === i}
-              aria-label={`${fn.n} ${fn.title}`}
-              className={stop === i ? 'dot here' : 'dot'}
-              style={{ background: stop >= i ? fn.color : undefined }}
-              onClick={() => jumpTo(i)}
-            />
-          ))}
+        <div className="functions__ui">
+          <header className="functions__head">
+            <p className="mono soft">{C.kicker}</p>
+            <h2>{C.head}</h2>
+            <p className="functions__sub soft">{C.sub}</p>
+          </header>
+
+          <div className="functions__panels">
+            {FUNCTIONS.map((fn, i) => (
+              <FunctionPanel key={fn.n} fn={fn} active={stop === i} dark={i >= 4} />
+            ))}
+          </div>
+
+          <div className="functions__dots" role="tablist" aria-label="Jump to a function">
+            {FUNCTIONS.map((fn, i) => (
+              <button
+                key={fn.n}
+                type="button"
+                role="tab"
+                aria-selected={stop === i}
+                aria-label={`${fn.n} ${fn.title}`}
+                className={stop === i ? 'dot here' : 'dot'}
+                style={{ background: stop >= i ? fn.color : undefined }}
+                onClick={() => jumpTo(i)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

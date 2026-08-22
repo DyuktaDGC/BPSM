@@ -554,8 +554,9 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 }
 
 .functions__stage {
-  position: relative;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   overflow: hidden;
 }
 
@@ -593,7 +594,8 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   position: absolute;
   width: 68px;
   height: 116px;
-  transform: translate(calc(-50% + var(--fly-x, 0px)), calc(-100% - var(--fly, 0px)));
+  transform: translate(calc(-50% + var(--fly-x, 0px)), calc(-100% - var(--fly, 0px))) scale(var(--rig, 1));
+  transform-origin: 50% 100%;
   pointer-events: none;
   color: var(--c1);
   transition: color 800ms var(--ease);
@@ -895,13 +897,32 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 .g-hero--6 { opacity: 0.4; }
 .g-hero--6 .g-acc { fill: #7a3fa8; }
 
-.functions__head {
+/* Head, copy and dots share one grid that fills the pinned box.
+   They used to be three absolutely-positioned blocks free to overlap each
+   other and to run off the bottom of the screen — which they did: below
+   ~1100px the copy column started inside the heading, and in the 861-900px
+   band the panels were anchored bottom while their children were anchored
+   top, so every panel hung off the fold behind the dots. */
+.functions__ui {
   position: absolute;
-  top: clamp(60px, 9vh, 110px);
-  left: var(--gutter);
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head panels'
+    'dots dots';
+  gap: var(--s3) var(--s5);
+  padding: clamp(56px, 9vh, 110px) var(--gutter) clamp(18px, 3vh, 30px);
+  pointer-events: none;
+}
+
+.functions__head {
+  grid-area: head;
+  align-self: start;
   max-width: 30ch;
-  z-index: 6;
-  transition: color 320ms ease, text-shadow 320ms ease;
+  transition: color 320ms ease, text-shadow 320ms ease, opacity 420ms ease;
 }
 .functions--dark .functions__head,
 .functions--dark .functions__head h2,
@@ -916,21 +937,21 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 }
 .functions__sub { font-size: clamp(13px, 1.2vw, 16px); }
 
+/* All seven live in the same grid cell, so the box is as tall as the tallest
+   of them and no taller — no absolute children, nothing to overflow. */
 .functions__panels {
-  position: absolute;
-  top: clamp(70px, 10.5vh, 128px);
-  left: 30%;
-  right: var(--gutter);
-  z-index: 6;
+  grid-area: panels;
+  align-self: start;
+  display: grid;
+  min-width: 0;
 }
 
 .fpanel {
-  position: absolute;
-  top: 0; left: 0;
+  grid-area: 1 / 1;
   display: flex;
   align-items: flex-start;
   gap: var(--s4);
-  width: 100%;
+  min-width: 0;
   opacity: 0;
   pointer-events: none;
   transition: opacity 700ms ease;
@@ -939,6 +960,7 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 .fpanel.dark .fpanel__said,
 .fpanel.dark .fpanel__gets li { color: #e4e2f0; }
 .fpanel.on { opacity: 1; pointer-events: auto; }
+.functions--flat .fpanel { pointer-events: auto; }
 
 .fpanel__num {
   flex: none;
@@ -987,21 +1009,89 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   background: var(--tone);
 }
 
-@media (max-width: 900px) {
-  .functions__panels { left: var(--gutter); top: auto; bottom: 26vh; }
-  .functions__head { max-width: 22ch; }
-  .functions__head h2 { font-size: clamp(24px, 5.4vw, 34px); }
-  .fpanel { flex-direction: column; gap: 10px; }
+/* Under 1100px the copy cannot sit beside the road without one landing on
+   the other, so it drops into a sheet below it. Matches WIDE_W in stage.ts,
+   which is what moves the camera up to make room. */
+@media (max-width: 1099px) {
+  .functions__ui {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'head'
+      '.'
+      'panels'
+      'dots';
+    gap: var(--s2);
+    padding: clamp(52px, 8vh, 96px) var(--gutter) clamp(14px, 2.4vh, 24px);
+  }
+
+  .functions__head { max-width: 24ch; }
+  .functions__head h2 { font-size: clamp(24px, 4.4vw, 34px); }
+
+  /* Once you are walking, the panel is the content and the heading has done
+     its job — holding both on a short screen just squeezes the road. */
+  .functions--engaged .functions__head { opacity: 0; }
+
+  .functions__panels {
+    align-self: end;
+    border: var(--line) solid var(--rule);
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--paper) 94%, transparent);
+    box-shadow: 0 18px 44px -30px rgba(0, 0, 0, 0.55);
+    padding: clamp(14px, 3vw, 22px) clamp(16px, 3.4vw, 26px);
+  }
+
+  /* The sheet is paper in every band, so the late-band light-on-dark copy
+     would be white on off-white. */
+  .functions__panels .fpanel.dark .fpanel__title { color: var(--ink); }
+  .functions__panels .fpanel.dark .fpanel__said { color: var(--ink); }
+  .functions__panels .fpanel.dark .fpanel__gets li { color: var(--soft); }
+
+  .functions__panels .fpanel { align-items: baseline; gap: var(--s2); }
+  .functions__panels .fpanel__num { font-size: clamp(30px, 5.6vw, 48px); }
+  .functions__panels .fpanel__body { max-width: none; }
+  .functions__panels .fpanel__title { font-size: clamp(18px, 2.9vw, 26px); margin-bottom: 10px; }
+  .functions__panels .fpanel__said { font-size: clamp(14px, 2.1vw, 17px); max-width: none; margin-bottom: 12px; }
+  .functions__panels .fpanel__gets li { font-size: clamp(13px, 1.9vw, 16px); }
+}
+
+/* A phone in portrait: the number moves onto the kicker line so the three
+   bullets are not fighting a 48px numeral for the width. */
+@media (max-width: 620px) {
+  .functions__panels { padding: 14px 16px 16px; }
+  .functions__panels .fpanel { display: block; }
+  .functions__panels .fpanel__num {
+    float: left;
+    margin-right: 12px;
+    font-size: 34px;
+    line-height: 1;
+  }
+  .functions__panels .fpanel__title { font-size: 19px; margin-bottom: 8px; }
+  .functions__panels .fpanel__said { font-size: 14px; margin-bottom: 10px; }
+  .functions__panels .fpanel__gets { gap: 6px; }
+  .functions__panels .fpanel__gets li { font-size: 13px; padding-left: 15px; }
+  .functions__panels .fpanel__gets li::before { top: 6px; width: 6px; height: 6px; }
+}
+
+/* Laptops and landscape phones. The sheet has to give the road something to
+   be seen in, so the copy trims rather than the picture. */
+@media (max-height: 700px) and (min-width: 621px) {
+  .functions__panels .fpanel__said { margin-bottom: 10px; }
+  .functions__panels .fpanel__gets { gap: 5px; }
+}
+@media (max-height: 560px) {
+  .functions__ui { padding-top: clamp(40px, 7vh, 64px); }
+  .functions__ui .functions__head { display: none; }
+  .functions__panels .fpanel__said { display: none; }
 }
 
 .functions__dots {
-  position: absolute;
-  left: 50%;
-  bottom: 26px;
-  transform: translateX(-50%);
+  grid-area: dots;
+  justify-self: center;
+  align-self: end;
   display: flex;
   gap: 9px;
-  z-index: 5;
+  pointer-events: auto;
 }
 .functions__dots .dot {
   position: relative;
@@ -1020,6 +1110,11 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   position: absolute;
   inset: -12px;
   border-radius: 50%;
+}
+@media (hover: none), (pointer: coarse) {
+  .functions__dots { gap: 14px; }
+  .functions__dots .dot { width: 13px; height: 13px; }
+  .functions__dots .dot::before { inset: -15px; }
 }
 .functions__dots .dot:hover { transform: scale(1.35); border-color: currentColor; }
 .functions__dots .dot:active { transform: scale(1.15); }
@@ -1983,10 +2078,6 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 @media (max-width: 1024px) {
   :root { --t-hero: clamp(34px, 8.2vw, 76px); }
   .sec--full { padding-top: clamp(88px, 13vh, 118px); }
-}
-
-@media (max-width: 860px) {
-  .functions__pin { position: static; height: auto; overflow: visible; }
 }
 
 @media (max-width: 900px) {

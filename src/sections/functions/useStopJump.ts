@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { dwellWindows, type RoadTimeline } from './mapScrollToDistance';
 import { getLenis } from '../../hooks/useLenis';
+import { pinHeightOf } from './stage';
 
 export function useStopJump(
   sectionRef: React.RefObject<HTMLElement | null>,
+  pinRef: React.RefObject<HTMLElement | null>,
   timeline: RoadTimeline,
   currentStop: number,
   stopCount: number,
@@ -16,8 +18,12 @@ export function useStopJump(
     const target = windows[Math.min(stopCount - 1, Math.max(0, index))];
     const mid = (target.start + target.end) / 2 - 0.012;
 
-    const scrollable = el.offsetHeight - window.innerHeight;
-    const top = el.offsetTop + mid * scrollable;
+    // Same two measurements the frame loop uses. `offsetTop` was neither:
+    // it is relative to the nearest positioned ancestor, so any wrapper that
+    // gains a `position` or a transform silently offsets every dot jump.
+    const docTop = el.getBoundingClientRect().top + window.scrollY;
+    const scrollable = Math.max(1, el.offsetHeight - pinHeightOf(pinRef.current));
+    const top = docTop + mid * scrollable;
 
     // Native smooth scrolling and Lenis both write scrollTop every frame, so
     // firing this while Lenis is running made the page visibly fight itself.

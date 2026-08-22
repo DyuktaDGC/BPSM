@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { dwellWindows, type RoadTimeline } from './mapScrollToDistance';
+import { pinHeightOf } from './stage';
 
 /** Time constant of the follow, in ms — the one knob for how tightly the road
  *  tracks the scroll. Lower is snappier, higher is floatier.
@@ -27,6 +28,7 @@ export type FrameFn = (progress: number, dt: number) => void;
 
 export function useRoadProgress(
   sectionRef: React.RefObject<HTMLElement | null>,
+  pinRef: React.RefObject<HTMLElement | null>,
   timeline: RoadTimeline,
   reduced: boolean,
 ) {
@@ -62,13 +64,18 @@ export function useRoadProgress(
     // first, so the height read here is the one it just applied.
     let docTop = 0;
     let height = 0;
+    let pinHeight = 0;
     let scrollable = 1;
 
     const measure = () => {
       const rect = el.getBoundingClientRect();
       docTop = rect.top + window.scrollY;
       height = el.offsetHeight;
-      scrollable = Math.max(1, height - window.innerHeight);
+      // The sticky child is what unpins, so its height — not the window's — is
+      // the run of scroll that maps onto the road. They are the same number on
+      // a desktop and different ones on a phone, where the box is sized in svh.
+      pinHeight = pinHeightOf(pinRef.current);
+      scrollable = Math.max(1, height - pinHeight);
     };
     measure();
 
@@ -79,7 +86,7 @@ export function useRoadProgress(
       last = now;
 
       const y = window.scrollY;
-      const vh = window.innerHeight;
+      const vh = pinHeight || window.innerHeight;
       const target = clamp((y - docTop) / scrollable);
 
       // A viewport of slack either side. Off-screen the section does no
@@ -115,11 +122,13 @@ export function useRoadProgress(
 
     raf = requestAnimationFrame(tick);
     window.addEventListener('resize', measure);
+    window.addEventListener('orientationchange', measure);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measure);
+      window.removeEventListener('orientationchange', measure);
     };
-  }, [sectionRef, timeline, reduced]);
+  }, [sectionRef, pinRef, timeline, reduced]);
 
   return { progressRef, stop, onFrame };
 }

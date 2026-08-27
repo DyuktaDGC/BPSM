@@ -169,22 +169,6 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 .nav--tight { --nav-pad: 10px; }
 .nav--tight .nav__logo img { width: 28px; }
 
-/* Reading rail — how far through the page you are, tied to Lenis' own
-   progress so it tracks the eased position rather than the raw wheel. */
-.nav::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: var(--brand);
-  transform: scaleX(var(--scroll, 0));
-  transform-origin: 0 50%;
-  opacity: 0.9;
-}
-.nav::after { transition: transform 120ms linear; }
-
 /* Set from JS by whichever section is passing under the bar, so the nav stops
    sitting as a black slab on top of the light Framework section. */
 .nav--light {

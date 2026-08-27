@@ -628,7 +628,12 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 .walker[data-vehicle='rocket'] .veh--rocket,
 .walker[data-vehicle='chute'] .veh--chute { display: block; }
 
-.walker svg { overflow: visible; display: block; }
+/* Same opt-out as the road: every rig is a fixed-size drawing, and `.veh` is a
+   shrink-to-fit box anchored at left:50%, so the global media reset resolved
+   `max-width: 100%` against half the walker's width. That let
+   preserveAspectRatio render the character at 0.5x, letterboxed and centred —
+   which is why he came out small and hovering a good 30px above the road. */
+.walker svg { overflow: visible; display: block; max-width: none; }
 .walker svg circle, .walker svg rect, .walker svg path { fill: currentColor; }
 .walker svg line { stroke: currentColor; stroke-linecap: round; fill: none; }
 .walker svg .d1 { color: color-mix(in srgb, currentColor 88%, #000); }

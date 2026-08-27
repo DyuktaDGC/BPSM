@@ -17,7 +17,15 @@ export const WIDE_W = 1100;
 /** Below this the section is being read with a thumb. */
 export const COMPACT_W = 860;
 
-const MIN_SCALE = 0.46;
+/** The height the world was drawn against, paired with WIDE_W. Zoom is the
+ *  smaller of the two fits so a short-and-wide window never pushes the road
+ *  taller than the pinned box. */
+const WIDE_H = 720;
+
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 1.35;
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 export type Stage = {
   /** Where on screen the road is pinned. */
@@ -41,7 +49,9 @@ export function readStage(pinHeight: number): Stage {
     // with the copy sheet under it; wide ones put it low-left, copy beside.
     x: w * (wide ? 0.3 : 0.46),
     y: h * (wide ? 0.66 : 0.42),
-    scale: wide ? 1 : Math.max(MIN_SCALE, w / WIDE_W),
+    // Zoom tracks the window in both axes rather than pinning to 1 above
+    // WIDE_W: at a fixed scale the rig stayed 116px tall on a 4K monitor.
+    scale: clamp(Math.min(w / WIDE_W, h / WIDE_H), MIN_SCALE, MAX_SCALE),
     // A thumb covers less ground than a wheel: seven stops at the desktop
     // rate is about nine screens of flicking on a phone.
     unit: compact ? 0.42 : 0.66,

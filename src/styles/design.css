@@ -544,8 +544,15 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   overflow: hidden;
 }
 
-.road__world { position: absolute; left: 0; top: 0; will-change: transform; }
-.road__svg { overflow: visible; display: block; }
+/* The camera in Road.tsx solves for the world offset assuming the zoom happens
+   about the world's own (0,0). The default centre origin put the road
+   (1 - scale) × 4625px away from the walker on every screen under WIDE_W. */
+.road__world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+/* The road is a fixed-size world the camera pans over, so it must opt out of
+   the global media reset: clamping it to the parent's width made the default
+   preserveAspectRatio letterbox the viewBox at 0.79x and re-centre it, which
+   shrank the road and slid it out from under the walker's feet. */
+.road__svg { overflow: visible; display: block; max-width: none; }
 
 .road__flag { pointer-events: none; }
 .road__base { fill: none; stroke: var(--rule); stroke-width: 2.5; stroke-linecap: round; }

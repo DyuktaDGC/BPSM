@@ -74,3 +74,11 @@ export function useLenis(enabled: boolean) {
     };
   }, [enabled]);
 }
+
+/** Freezes the page scroll. Lenis owns the wheel when it is running, so its
+ *  own stop() is the only thing that holds; without it we fall back to the
+ *  document overflow. */
+export function lockScroll(on: boolean) {
+  if (current) on ? current.stop() : current.start();
+  document.documentElement.style.overflow = on && !current ? 'hidden' : '';
+}

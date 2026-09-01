@@ -5,7 +5,7 @@ import { COPY } from '../../content/copy';
 import { SYMPTOMS } from '../../content/symptoms';
 import SymptomRow from './SymptomRow';
 import { useMirrorState } from './useMirrorState';
-import { scrollToId } from '../../hooks/useLenis';
+import { scrollToId, lockScroll } from '../../hooks/useLenis';
 
 const C = COPY.mirror;
 
@@ -13,7 +13,14 @@ export default function Mirror({ reduced }: { reduced: boolean }) {
   const { picked, toggle } = useMirrorState();
   const listRef = useRef<HTMLDivElement>(null);
   const seen = useRevealed(listRef, SYMPTOMS.length, reduced);
-  const jump = () => scrollToId('solution');
+  const [passed, setPassed] = useState(false);
+  const gateRef = useRef<HTMLDivElement>(null);
+  useScrollGate(gateRef, !passed);
+  const jump = () => {
+    setPassed(true);
+    lockScroll(false);
+    scrollToId('solution');
+  };
 
   return (
     <Section id="mirror" className="mirror">
@@ -39,13 +46,29 @@ export default function Mirror({ reduced }: { reduced: boolean }) {
             ))}
           </div>
 
-          <div className="mirror__tally">
+          <div className="mirror__tally" ref={gateRef}>
             <Cta label={C.cta} where="mirror" arrow="↓" tone="ink" onClick={jump} />
           </div>
         </div>
       </div>
     </Section>
   );
+}
+
+/** Holds the page here until the CTA is used: the tally comes into view, the
+ *  scroll freezes, and only the button releases it. */
+function useScrollGate(gate: React.RefObject<HTMLElement | null>, active: boolean) {
+  useEffect(() => {
+    const el = gate.current;
+    if (!active || !el) return;
+
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) lockScroll(true); },
+      { threshold: 1 },
+    );
+    io.observe(el);
+    return () => { io.disconnect(); lockScroll(false); };
+  }, [gate, active]);
 }
 
 function useRevealed(

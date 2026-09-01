@@ -320,7 +320,7 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 .cta:hover span { transform: translateX(3px); }
 
 .cta--ink { background: var(--ink); color: var(--paper); }
-.cta--ink:hover { background: #000; transform: translateY(-2px); }
+.cta--ink:hover { background: color-mix(in srgb, var(--ink) 86%, var(--paper)); transform: translateY(-2px); }
 
 .hero { position: relative; text-align: center; align-items: center; }
 .hero > * { position: relative; z-index: 1; }

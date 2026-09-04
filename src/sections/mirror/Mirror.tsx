@@ -76,13 +76,21 @@ function useScrollGate(gate: React.RefObject<HTMLElement | null>, active: boolea
     const el = gate.current;
     if (!active || !el) return;
 
-    // Disconnects on the first hold: the gate is a one-time stop, not something
-    // that grabs the page again every time these rows come back into view.
+    // The last row coming into view means the section is nearly, but not
+    // exactly, filling the screen — freezing right there strands the block a
+    // hundred-odd pixels low. So settle onto the composed frame first and hold
+    // once it lands. Disconnects on the first hold: this is a one-time stop,
+    // not something that grabs the page again on every pass.
     const io = new IntersectionObserver(
       ([e]) => {
         if (!e.isIntersecting) return;
-        lockScroll(true);
         io.disconnect();
+        scrollToId('mirror', () => {
+          // Only freeze if the rows actually fit the settled frame. On a short
+          // window they don't, and holding there would put the last few — and
+          // the reason to tick anything — somewhere the user cannot scroll to.
+          if (el.getBoundingClientRect().bottom <= window.innerHeight) lockScroll(true);
+        });
       },
       { threshold: 1 },
     );

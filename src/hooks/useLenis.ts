@@ -22,7 +22,7 @@ export const navOffset = () => -(document.querySelector('.nav')?.getBoundingClie
 
 /** Scrolls to an element by id through Lenis when it's running, and falls back
  *  to the native smooth scroll when it isn't (reduced motion, or /demos.html). */
-export function scrollToId(id: string) {
+export function scrollToId(id: string, onArrive?: () => void) {
   const target = document.getElementById(id);
   if (!target) return;
   // A section about one screen tall centres its own content well clear of the
@@ -37,8 +37,14 @@ export function scrollToId(id: string) {
   // so it releases the mirror's scroll gate on the way. Lenis ignores scrollTo
   // while stopped, which would otherwise make the nav look dead behind a lock.
   lockScroll(false);
-  if (current) current.scrollTo(target, { offset, duration: 1.4 });
-  else target.scrollIntoView({ behavior: 'smooth' });
+  if (current) {
+    current.scrollTo(target, { offset, duration: 1.4, onComplete: onArrive });
+  } else {
+    // The native path has no completion callback, so the wait is the CSS smooth
+    // scroll's own duration with a little slack.
+    target.scrollIntoView({ behavior: 'smooth' });
+    if (onArrive) window.setTimeout(onArrive, 700);
+  }
 }
 
 /** Same-page hash links — the nav, the logo, the menu, CONTACT US — go through

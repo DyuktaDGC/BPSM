@@ -25,7 +25,15 @@ export const navOffset = () => -(document.querySelector('.nav')?.getBoundingClie
 export function scrollToId(id: string) {
   const target = document.getElementById(id);
   if (!target) return;
-  if (current) current.scrollTo(target, { offset: navOffset(), duration: 1.4 });
+  // A section about one screen tall centres its own content well clear of the
+  // bar, so the nav offset there only drops the whole frame a bar's height low
+  // and the landing reads as "stopped halfway". Long scroll stages (#functions,
+  // #dashboards) start their content at the very top and still need it, and so
+  // does anything short enough to sit entirely behind the bar.
+  const h = target.offsetHeight;
+  const oneScreen = h >= window.innerHeight * 0.8 && h <= window.innerHeight * 1.15;
+  const offset = oneScreen ? 0 : navOffset();
+  if (current) current.scrollTo(target, { offset, duration: 1.4 });
   else target.scrollIntoView({ behavior: 'smooth' });
 }
 

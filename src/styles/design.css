@@ -356,8 +356,20 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 
 /* Two columns: the ask holds still on the left while the list runs down the
    right. The intro sticks so the question stays with the answers on tall
-   viewports instead of scrolling away by the third row. */
-.mirror { text-align: left; }
+   viewports instead of scrolling away by the third row.
+
+   The section owns a full screen and centres its content in it, so the scroll
+   gate always halts on a composed frame rather than mid-list. The top pad is
+   the larger of the block rhythm and the fixed nav, so centring never tucks
+   the kicker under the bar. */
+.mirror {
+  text-align: left;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: max(var(--block), 116px);
+}
 
 .mirror__grid {
   display: grid;
@@ -369,8 +381,6 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 /* Question and tally travel together, so the left column is a filled block
    rather than a paragraph with a screen of nothing under it. */
 .mirror__aside {
-  position: sticky;
-  top: clamp(96px, 14vh, 148px);
   display: flex;
   flex-direction: column;
   gap: clamp(24px, 3.5vh, 44px);
@@ -506,7 +516,7 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 .solution {
   position: relative;
   overflow: hidden;
-  min-height: 130svh;
+  min-height: 100svh;
   text-align: center;
   align-items: center;
   gap: var(--s4);

@@ -69,15 +69,21 @@ export default function Mirror({ reduced }: { reduced: boolean }) {
   );
 }
 
-/** Holds the page here until the CTA is used: the tally comes into view, the
- *  scroll freezes, and only the button releases it. */
+/** Holds the page here once: the rows run out, the scroll freezes, and the CTA
+ *  — or any nav jump, which releases the lock through scrollToId — frees it. */
 function useScrollGate(gate: React.RefObject<HTMLElement | null>, active: boolean) {
   useEffect(() => {
     const el = gate.current;
     if (!active || !el) return;
 
+    // Disconnects on the first hold: the gate is a one-time stop, not something
+    // that grabs the page again every time these rows come back into view.
     const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) lockScroll(true); },
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        lockScroll(true);
+        io.disconnect();
+      },
       { threshold: 1 },
     );
     io.observe(el);

@@ -52,7 +52,7 @@ export default function Nav({ base = '' }: { base?: string }) {
       setTight(window.scrollY > TIGHTEN_AT);
 
       const root = document.documentElement;
-      if (!root.classList.contains('lenis-on')) {
+      if (!root.hasAttribute('data-lenis')) {
         const max = root.scrollHeight - window.innerHeight;
         root.style.setProperty('--scroll', max > 0 ? (window.scrollY / max).toFixed(4) : '0');
       }

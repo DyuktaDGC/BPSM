@@ -59,7 +59,7 @@
 html { scroll-behavior: smooth; }
 /* Lenis writes scrollTop every frame; the CSS smooth-scroll animates the same
    value, so the two fight. Anchor travel is handled by Lenis while it runs. */
-html.lenis-on { scroll-behavior: auto; }
+html[data-lenis] { scroll-behavior: auto; }
 
 body {
   margin: 0;

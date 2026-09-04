@@ -8,7 +8,7 @@ import Dashboards from '../../sections/dashboards/Dashboards';
 import Close from '../../sections/Close';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useMedia, COMPACT } from '../../hooks/useMedia';
-import { useLenis } from '../../hooks/useLenis';
+import { useLenis, useHashLinks } from '../../hooks/useLenis';
 import { useParallax } from '../../hooks/useParallax';
 
 export default function Home() {
@@ -16,6 +16,7 @@ export default function Home() {
   const compact = useMedia(COMPACT);
 
   useLenis(!reduced && !compact);
+  useHashLinks();
   useParallax(!reduced && !compact);
 
   return (

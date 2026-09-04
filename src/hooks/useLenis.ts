@@ -33,8 +33,41 @@ export function scrollToId(id: string) {
   const h = target.offsetHeight;
   const oneScreen = h >= window.innerHeight * 0.8 && h <= window.innerHeight * 1.15;
   const offset = oneScreen ? 0 : navOffset();
+  // Every caller here is a deliberate "take me there" — a CTA or a nav link —
+  // so it releases the mirror's scroll gate on the way. Lenis ignores scrollTo
+  // while stopped, which would otherwise make the nav look dead behind a lock.
+  lockScroll(false);
   if (current) current.scrollTo(target, { offset, duration: 1.4 });
   else target.scrollIntoView({ behavior: 'smooth' });
+}
+
+/** Same-page hash links — the nav, the logo, the menu, CONTACT US — go through
+ *  scrollToId instead of the browser's own fragment jump. Lenis writes scrollTop
+ *  every frame off its own animated position, so a native jump gets overwritten
+ *  by the next frame and the link reads as dead. Delegated from the document so
+ *  every anchor on the page is covered without a handler each. */
+export function useHashLinks() {
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.('a[href*="#"]') as HTMLAnchorElement | null;
+      if (!a || a.target === '_blank') return;
+
+      const url = new URL(a.href, location.href);
+      // Cross-page links keep their normal navigation — /demos links back here
+      // with "/#dashboards" and has to actually load the page first.
+      if (url.pathname !== location.pathname || !url.hash) return;
+      const id = decodeURIComponent(url.hash.slice(1));
+      if (!document.getElementById(id)) return;
+
+      e.preventDefault();
+      history.pushState(null, '', url.hash);
+      scrollToId(id);
+    };
+
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, []);
 }
 
 export function useLenis(enabled: boolean) {
@@ -58,9 +91,11 @@ export function useLenis(enabled: boolean) {
     gsap.ticker.lagSmoothing(0);
 
     // CSS `scroll-behavior: smooth` animates the same scrollTop Lenis is
-    // writing, so it has to be off for as long as Lenis owns the scroll.
+    // writing, so it has to be off for as long as Lenis owns the scroll. This
+    // is an attribute rather than a class because Lenis assigns className
+    // wholesale for its own state classes and would wipe a class off the root.
     const root = document.documentElement;
-    root.classList.add('lenis-on');
+    root.dataset.lenis = 'on';
 
     // Read progress off the instance rather than window.scrollY: it is already
     // computed each frame, and it stays correct while a scrollTo is animating.
@@ -77,7 +112,7 @@ export function useLenis(enabled: boolean) {
       gsap.ticker.remove(raf);
       lenis.destroy();
       current = null;
-      root.classList.remove('lenis-on');
+      delete root.dataset.lenis;
       root.style.removeProperty('--scroll');
     };
   }, [enabled]);

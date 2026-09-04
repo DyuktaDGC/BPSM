@@ -12,9 +12,11 @@ type Props = {
   external?: boolean;
   where: string;
   style?: CSSProperties;
+  /** Button-only. A disabled anchor is not a thing, so links ignore it. */
+  disabled?: boolean;
 };
 
-export default function Cta({ label, href, onClick, tone = 'brand', size = 'md', arrow = '→', external, where, style }: Props) {
+export default function Cta({ label, href, onClick, tone = 'brand', size = 'md', arrow = '→', external, where, style, disabled }: Props) {
   const cls = `cta cta--${tone} cta--${size}`;
   const fire = () => { track('cta_click', { where, label }); onClick?.(); };
 
@@ -30,6 +32,6 @@ export default function Cta({ label, href, onClick, tone = 'brand', size = 'md',
       {label}<span aria-hidden="true">{arrow}</span>
     </a>
   ) : (
-    <button type="button" className={cls} style={style} onClick={fire}>{label}<span aria-hidden="true">{arrow}</span></button>
+    <button type="button" className={cls} style={style} onClick={fire} disabled={disabled}>{label}<span aria-hidden="true">{arrow}</span></button>
   );
 }

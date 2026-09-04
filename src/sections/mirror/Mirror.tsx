@@ -16,7 +16,11 @@ export default function Mirror({ reduced }: { reduced: boolean }) {
   const [passed, setPassed] = useState(false);
   const gateRef = useRef<HTMLDivElement>(null);
   useScrollGate(gateRef, !passed);
+  // Nothing ticked means nothing to answer, so the button stays inert and the
+  // gate keeps holding — the whole point of the section is the picking.
+  const ready = picked.size > 0;
   const jump = () => {
+    if (!ready) return;
     setPassed(true);
     lockScroll(false);
     scrollToId('solution');
@@ -29,14 +33,26 @@ export default function Mirror({ reduced }: { reduced: boolean }) {
             data-par drift these three carried is gone — a sticky parent stops
             moving, so the scrub froze mid-travel and left the copy sitting a
             dozen pixels off its own layout box. */}
-        <div className="mirror__intro">
-          <p className="mono soft">{C.kicker}</p>
-          <h2 className="mirror__head">{C.head}</h2>
-          <p className="mirror__sub soft">{C.sub}</p>
+        <div className="mirror__aside">
+          <div className="mirror__intro">
+            <p className="mono soft">{C.kicker}</p>
+            <h2 className="mirror__head">{C.head}</h2>
+            <p className="mirror__sub soft">{C.sub}</p>
+          </div>
+
+          {/* The tally lives with the question, not stranded under the last
+              row — it fills the column the sticky intro used to leave empty
+              and keeps the count in view while the rows are being read. */}
+          <div className={ready ? 'mirror__tally is-ready' : 'mirror__tally'}>
+            <p className="mirror__count mono" aria-live="polite">
+              {ready ? `${picked.size} of ${SYMPTOMS.length} ticked` : 'Tick at least one to carry on'}
+            </p>
+            <Cta label={C.cta} where="mirror" arrow="↓" tone="ink" onClick={jump} disabled={!ready} />
+          </div>
         </div>
 
-        {/* Right: the rows, with the CTA under them so reading order still
-            works once this collapses to a single column. */}
+        {/* Right: the rows. On one column the aside splits so the tally
+            drops below them and reading order still works. */}
         <div className="mirror__col">
           <div className="mirror__list" ref={listRef}>
             {SYMPTOMS.map((s, i) => (
@@ -44,10 +60,8 @@ export default function Mirror({ reduced }: { reduced: boolean }) {
                 <SymptomRow symptom={s} index={i} on={picked.has(i)} onToggle={toggle} />
               </div>
             ))}
-          </div>
-
-          <div className="mirror__tally" ref={gateRef}>
-            <Cta label={C.cta} where="mirror" arrow="↓" tone="ink" onClick={jump} />
+            {/* End-of-list sentinel: the gate arms once the rows run out. */}
+            <div className="mirror__gate" ref={gateRef} aria-hidden="true" />
           </div>
         </div>
       </div>

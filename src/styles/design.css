@@ -361,14 +361,19 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 
 .mirror__grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: clamp(32px, 5vw, 84px);
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: clamp(32px, 4vw, 64px);
   align-items: start;
 }
 
-.mirror__intro {
+/* Question and tally travel together, so the left column is a filled block
+   rather than a paragraph with a screen of nothing under it. */
+.mirror__aside {
   position: sticky;
-  top: clamp(104px, 17vh, 170px);
+  top: clamp(96px, 14vh, 148px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 3.5vh, 44px);
 }
 
 .mirror__head {
@@ -378,7 +383,7 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 }
 .mirror__sub {
   max-width: 38ch;
-  margin: 0 0 var(--s5);
+  margin: 0;
   font-size: clamp(14px, 1.35vw, 17px);
 }
 
@@ -392,9 +397,14 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 @media (max-width: 900px) {
   .mirror { text-align: center; }
   .mirror__grid { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
-  .mirror__intro { position: static; }
+  /* One column: the aside stops being a box so its two halves can sit either
+     side of the list — question first, tally last. */
+  .mirror__aside { display: contents; }
+  .mirror__intro { order: 1; }
+  .mirror__col { order: 2; }
+  .mirror__tally { order: 3; align-items: center; }
   .mirror__head { margin: 0 auto 14px; max-width: 17ch; }
-  .mirror__sub { margin: 0 auto var(--s5); max-width: 44ch; }
+  .mirror__sub { margin: 0 auto; max-width: 44ch; }
 }
 
 .reveal {
@@ -465,9 +475,23 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-  margin-top: var(--s5);
+  gap: 14px;
 }
+
+.mirror__count {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--soft);
+  transition: color var(--quick);
+}
+.mirror__tally.is-ready .mirror__count { color: var(--ink); }
+
+.cta:disabled { opacity: 0.42; cursor: not-allowed; }
+
+/* 1px, not 0 — a zero-area target never reaches a ratio of 1, so the gate's
+   observer would never fire. */
+.mirror__gate { height: 1px; }
 
 @media (max-width: 900px) {
   .mirror__tally {

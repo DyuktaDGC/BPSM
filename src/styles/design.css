@@ -375,7 +375,10 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: clamp(32px, 4vw, 64px);
-  align-items: start;
+  /* The ask sits on the list's optical centre rather than its first row — the
+     left column is half the height of the rows, so top-aligning it hangs the
+     whole block off the top and leaves the corner under SUBMIT empty. */
+  align-items: center;
 }
 
 /* Question and tally travel together, so the left column is a filled block

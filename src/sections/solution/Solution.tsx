@@ -25,7 +25,12 @@ export default function Solution() {
         setSeen(true);
         io.disconnect();
       },
-      { threshold: 0.35 },
+      // Fires half a screen early, not at 35% visible. The entrance is a 900ms
+      // slide and this section is what SUBMIT jumps to: triggered on arrival it
+      // finished after the 1.4s glide had stopped, so the whole block slid up
+      // under a page that had already come to rest. Starting it as the jump
+      // sets off means it has landed by the time you have.
+      { threshold: 0, rootMargin: '50% 0px' },
     );
     io.observe(el);
     return () => io.disconnect();

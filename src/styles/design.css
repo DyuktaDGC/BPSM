@@ -1294,7 +1294,12 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 
 .dashboards__scroll {
   position: relative;
-  height: 140svh;
+  /* The pin's headroom. The fold-and-spread is timer-driven and runs about
+     2.2s; at 140svh the scroll left after the trigger fired ran out before it
+     finished, so the section unpinned and slid away on its own momentum the
+     moment the animation ended. The trigger sits at the top of this spacer, so
+     the extra height is all room after the sequence starts. */
+  height: 220svh;
   pointer-events: none;
 }
 
@@ -1879,12 +1884,13 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 }
 
 /* FOOTER*/
-/* One centred line: seal, wordmark, phone, place, rights. It wraps rather than
-   stacks, so a narrow window costs a second line instead of a whole column. */
+/* One line, with the seal dead centre of the page: contact left, brand middle,
+   rights right. Three columns rather than a centred flex row — with flex the
+   brand only lands mid-page when the two side blocks happen to weigh the same,
+   and they never do. */
 .footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: clamp(14px, 2.2vw, 30px);
   background: #fff;
@@ -1896,6 +1902,8 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 
 /* ---- seal + wordmark ---- */
 .footer__brand {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -1916,6 +1924,9 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 
 /* ---- contact row ---- */
 .footer__contact {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1932,13 +1943,20 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 
 /* ---- rights ---- */
 .footer__rights {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
   margin: 0;
   font-size: clamp(12px, 0.95vw, 14px);
   color: #6b6b6b;
 }
 
-@media (max-width: 620px) {
-  .footer { gap: 10px 18px; }
+@media (max-width: 760px) {
+  /* Too narrow for three columns: stack them centred, brand first. */
+  .footer { grid-template-columns: 1fr; gap: 14px; justify-items: center; }
+  .footer__brand { grid-column: 1; grid-row: 1; }
+  .footer__contact { grid-column: 1; grid-row: 2; justify-self: center; }
+  .footer__rights { grid-column: 1; grid-row: 3; justify-self: center; }
 }
 
 /* DEMOS PAGE — /demos*/

@@ -13,7 +13,7 @@ const GAP = 60;
 const T_S2 = DELAY;
 const T_S3 = DELAY + RISE + GAP;
 const T_CLOSE = 520;
-const T_LIVE = 1200;
+const T_LIVE = 1060;
 
 export function useFanSequence(
   sectionRef: React.RefObject<HTMLElement | null>,

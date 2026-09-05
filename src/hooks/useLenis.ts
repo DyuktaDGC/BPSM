@@ -44,7 +44,18 @@ export function scrollToId(id: string, onArrive?: () => void) {
     // from the last gesture. Click a jump mid-glide and it landed short by
     // exactly that lag — the band of the previous section left on screen.
     const top = target.getBoundingClientRect().top + window.scrollY + offset;
-    current.scrollTo(top, { duration: 1.4, onComplete: onArrive });
+    // Re-measure on arrival and take up whatever the glide drifted by. A 1.4s
+    // animation is long enough for the page under it to move — a section above
+    // finishing its own reveal, a scroll stage applying its measured height —
+    // and the jump has no way to know. This makes the landing exact by
+    // definition instead of exact only if nothing moved. Under a pixel is
+    // rounding, not drift, and re-scrolling for it would read as a twitch.
+    const settle = () => {
+      const exact = target.getBoundingClientRect().top + window.scrollY + offset;
+      if (Math.abs(exact - window.scrollY) > 1) current?.scrollTo(exact, { immediate: true });
+      onArrive?.();
+    };
+    current.scrollTo(top, { duration: 1.4, onComplete: settle });
   } else {
     // The native path has no completion callback, so the wait is the CSS smooth
     // scroll's own duration with a little slack.

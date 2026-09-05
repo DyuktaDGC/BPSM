@@ -38,7 +38,13 @@ export function scrollToId(id: string, onArrive?: () => void) {
   // while stopped, which would otherwise make the nav look dead behind a lock.
   lockScroll(false);
   if (current) {
-    current.scrollTo(target, { offset, duration: 1.4, onComplete: onArrive });
+    // Resolve the element to a document position here rather than handing the
+    // element to Lenis: Lenis measures an element target against its own
+    // animatedScroll, which lags actualScroll while the page is still settling
+    // from the last gesture. Click a jump mid-glide and it landed short by
+    // exactly that lag — the band of the previous section left on screen.
+    const top = target.getBoundingClientRect().top + window.scrollY + offset;
+    current.scrollTo(top, { duration: 1.4, onComplete: onArrive });
   } else {
     // The native path has no completion callback, so the wait is the CSS smooth
     // scroll's own duration with a little slack.

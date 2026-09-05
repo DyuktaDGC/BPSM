@@ -1296,7 +1296,9 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 
 .dashboards__eyebrow {
   overflow: hidden;
-  margin: var(--s4) auto 0;
+  /* No top margin: the column is centred, so a margin above the first item is
+     counted as content and tips the whole stack down by its own height. */
+  margin: 0 auto;
 }
 
 .dashboards__eyebrow > span {
@@ -1654,16 +1656,18 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 .dcard--shot .dcard__top,
 .dcard--shot .dcard__bottom { opacity: 0; }
 
-/* ---- stage: copy and controls share the same space ---- */
+/* ---- stage: holds the headline and its line ---- */
 .dashboards__stage {
   position: relative;
   margin-top: clamp(16px, 2.2vh, 34px);
-  min-height: clamp(150px, 21vh, 225px);
   width: 100%;
 }
+/* Static, so the stage is as tall as what is in it. The copy used to be
+   absolute over a min-height box — a leftover from when the s4 controls shared
+   this space — and at every size the copy was taller than that box, so the
+   column centred on a height 55px short of the truth and the description hung
+   past the bottom padding. The controls live in .dashboards__panel now. */
 .dashboards__copy {
-  position: absolute;
-  inset: 0 0 auto 0;
   text-align: center;
 }
 

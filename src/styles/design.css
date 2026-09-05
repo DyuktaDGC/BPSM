@@ -1879,43 +1879,40 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 }
 
 /* FOOTER*/
+/* One centred line: seal, wordmark, phone, place, rights. It wraps rather than
+   stacks, so a narrow window costs a second line instead of a whole column. */
 .footer {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
+  gap: clamp(14px, 2.2vw, 30px);
   background: #fff;
   color: #111;
   border-radius: 32px 32px 0 0;
-  padding: var(--block-sm) var(--pad-x-page) clamp(32px, 4vh, 48px);
+  padding: clamp(16px, 2.4vh, 26px) var(--pad-x-page);
   text-align: center;
 }
 
 /* ---- seal + wordmark ---- */
 .footer__brand {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   text-decoration: none;
 }
-.footer__badge { width: clamp(40px, 3.6vw, 52px); height: auto; display: block; filter: none; }
+.footer__badge { width: clamp(24px, 2.1vw, 30px); height: auto; display: block; filter: none; }
 .footer__wordmark {
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(24px, 2.4vw, 34px);
+  font-size: clamp(16px, 1.5vw, 21px);
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
-.footer__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  max-width: 900px;
-  margin-top: clamp(32px, 4vw, 52px);
-  padding-top: clamp(20px, 2.4vw, 28px);
-}
+/* The contact list and the rights line sit on the footer's own row rather than
+   in a band of their own — the wrapper is kept for the markup, not the layout. */
+.footer__row { display: contents; }
 
 /* ---- contact row ---- */
 .footer__contact {
@@ -1941,8 +1938,7 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
 }
 
 @media (max-width: 620px) {
-  .footer__row { flex-direction: column; gap: 16px; }
-  .footer__contact { flex-direction: column; gap: 12px; }
+  .footer { gap: 10px 18px; }
 }
 
 /* DEMOS PAGE — /demos*/
@@ -2206,7 +2202,6 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   .close__form .cta { justify-self: stretch; justify-content: center; }
 
   .footer { border-radius: 24px 24px 0 0; }
-  .footer__row { margin-top: var(--s5); }
 
   .demos { padding-bottom: var(--block-sm); }
   .demos__intro { padding-top: clamp(88px, 13vh, 120px); gap: var(--s3); }
@@ -2220,7 +2215,7 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   .hero__ask { font-size: clamp(31px, 10.4vw, 44px); }
   .fpanel__num { font-size: 34px; }
   .dashboards--s4 .dashboards__cards { --w: clamp(170px, 62vw, 220px); }
-  .footer__wordmark { font-size: 22px; }
+  .footer__wordmark { font-size: 17px; }
 }
 
 @media (max-width: 760px) and (max-height: 700px) {

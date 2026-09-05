@@ -533,6 +533,13 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   position: relative;
   overflow: hidden;
   min-height: 100svh;
+  /* The fixed bar sits over the top of this section, so centring on the
+     section's own box leaves the block a bar-height high and all the slack at
+     the bottom — which is what you see when a jump lands you here. Paying the
+     bar back in top padding puts the copy on the optical centre of what is
+     actually visible. 58px is the tight nav, the one you land under; below
+     1024px the .sec--full media rules take over and this is dropped. */
+  padding-top: calc(120px + 58px);
   text-align: center;
   align-items: center;
   gap: var(--s4);

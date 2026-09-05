@@ -124,10 +124,14 @@ export function useLenis(enabled: boolean) {
   }, [enabled]);
 }
 
-/** Freezes the page scroll. Lenis owns the wheel when it is running, so its
- *  own stop() is the only thing that holds; without it we fall back to the
- *  document overflow. */
+/** Freezes the page scroll. Lenis' stop() only owns the wheel — touch,
+ *  keyboard (space, PageDown, arrows), scrollbar drag and find-in-page all
+ *  still moved the page, which is why the gate leaked. Overflow is what
+ *  actually holds, so it goes on whether or not Lenis is running, and on both
+ *  elements because iOS ignores it on <html> alone. */
 export function lockScroll(on: boolean) {
   if (current) on ? current.stop() : current.start();
-  document.documentElement.style.overflow = on && !current ? 'hidden' : '';
+  document.documentElement.style.overflow = on ? 'hidden' : '';
+  document.body.style.overflow = on ? 'hidden' : '';
+  document.body.style.touchAction = on ? 'none' : '';
 }

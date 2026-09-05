@@ -52,7 +52,13 @@ export function scrollToId(id: string, onArrive?: () => void) {
     // rounding, not drift, and re-scrolling for it would read as a twitch.
     const settle = () => {
       const exact = target.getBoundingClientRect().top + window.scrollY + offset;
-      if (Math.abs(exact - window.scrollY) > 1) current?.scrollTo(exact, { immediate: true });
+      // Ride the correction out rather than teleporting it. An instant jump
+      // here is a visible jerk at the end of an otherwise smooth glide — the
+      // eye has been tracking a moving page and the last few pixels arrive
+      // with no motion at all. A short eased tail reads as the page settling.
+      if (Math.abs(exact - window.scrollY) > 1) {
+        current?.scrollTo(exact, { duration: 0.3, lock: true });
+      }
       onArrive?.();
     };
     // `lock` so the glide cannot be abandoned half way. Lenis drops a

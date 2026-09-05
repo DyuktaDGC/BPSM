@@ -16,17 +16,6 @@ export const getLenis = () => current;
  *  or sine ramp feels like the page is dragging behind the wheel instead. */
 const EASE = (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
-/** Jumps get their own curve. EASE is a pure ease-out, which is right for a
- *  wheel — the input has already given the page its speed. A jump starts from
- *  a standstill, so the same curve leaves at full pelt and reads as a yank;
- *  this one accelerates in and decelerates out. */
-const EASE_JUMP = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
-
-/** Seconds to cross `dist` px. A flat duration made a hop to the next section
- *  crawl and a run to the bottom of the page a blur; tying it to the distance
- *  keeps the speed roughly constant and the bounds keep it civil either way. */
-const jumpDuration = (dist: number) => Math.min(1.9, Math.max(0.6, Math.abs(dist) / 1400));
-
 /** Anchor jumps land under the fixed bar, not behind it. Measured rather than
  *  hard-coded — the bar's height moves with the gutter clamp. */
 export const navOffset = () => -(document.querySelector('.nav')?.getBoundingClientRect().height ?? 0);
@@ -55,27 +44,18 @@ export function scrollToId(id: string, onArrive?: () => void) {
     // from the last gesture. Click a jump mid-glide and it landed short by
     // exactly that lag — the band of the previous section left on screen.
     const top = target.getBoundingClientRect().top + window.scrollY + offset;
-    // Re-measure on arrival and take up whatever the glide drifted by. A jump
-    // lasts long enough for the page under it to move — a section above
+    // Re-measure on arrival and take up whatever the glide drifted by. A 1.4s
+    // animation is long enough for the page under it to move — a section above
     // finishing its own reveal, a scroll stage applying its measured height —
     // and the jump has no way to know. This makes the landing exact by
     // definition instead of exact only if nothing moved. Under a pixel is
     // rounding, not drift, and re-scrolling for it would read as a twitch.
     const settle = () => {
       const exact = target.getBoundingClientRect().top + window.scrollY + offset;
-      const drift = Math.abs(exact - window.scrollY);
-      // A handful of pixels is below the threshold of noticing, so take it
-      // instantly; anything bigger would land as a jolt at the end of an
-      // otherwise smooth glide, so ride it out instead.
-      if (drift > 20) current?.scrollTo(exact, { duration: 0.25, easing: EASE_JUMP });
-      else if (drift > 1) current?.scrollTo(exact, { immediate: true });
+      if (Math.abs(exact - window.scrollY) > 1) current?.scrollTo(exact, { immediate: true });
       onArrive?.();
     };
-    current.scrollTo(top, {
-      duration: jumpDuration(top - window.scrollY),
-      easing: EASE_JUMP,
-      onComplete: settle,
-    });
+    current.scrollTo(top, { duration: 1.4, onComplete: settle });
   } else {
     // The native path has no completion callback, so the wait is the CSS smooth
     // scroll's own duration with a little slack.

@@ -4,7 +4,7 @@ type FanStage = 's1' | 's2' | 's3' | 's3c' | 's4';
 /* These mirror the --fan-* durations in design.css. A stage must not be swapped
    out from under a transition that is still running, or the cards jump: RISE
    covers --fan-rise plus its 170ms stagger, T_CLOSE covers --fan-close plus its
-   120ms stagger (and the 520ms container fold), and T_LIVE covers the s4 spread
+   200ms stagger (and the 780ms container fold), and T_LIVE covers the s4 spread
    delay plus --fan-spread. Retune both files together. */
 const DELAY = 100;
 const RISE = 870;
@@ -12,8 +12,8 @@ const GAP = 60;
 
 const T_S2 = DELAY;
 const T_S3 = DELAY + RISE + GAP;
-const T_CLOSE = 520;
-const T_LIVE = 1060;
+const T_CLOSE = 820;
+const T_LIVE = 1400;
 
 export function useFanSequence(
   sectionRef: React.RefObject<HTMLElement | null>,

@@ -387,12 +387,6 @@ section[id], .functions { scroll-margin-top: clamp(64px, 9vh, 86px); }
   display: flex;
   flex-direction: column;
   gap: clamp(24px, 3.5vh, 44px);
-  /* Sticky so the question and SUBMIT are still on screen wherever the gate
-     freezes the page — on a window shorter than the list, the hold lands past
-     the top of the section and a static column would sit above the fold. */
-  position: sticky;
-  top: clamp(96px, 14vh, 150px);
-  align-self: start;
 }
 
 .mirror__head {

@@ -55,7 +55,12 @@ export function scrollToId(id: string, onArrive?: () => void) {
       if (Math.abs(exact - window.scrollY) > 1) current?.scrollTo(exact, { immediate: true });
       onArrive?.();
     };
-    current.scrollTo(top, { duration: 1.4, onComplete: settle });
+    // `lock` so the glide cannot be abandoned half way. Lenis drops a
+    // programmatic scroll the moment any wheel or touch input arrives, and a
+    // flick during the 1.4s — or the tail of the flick that got you here —
+    // left the page parked between two sections. A jump is a deliberate "take
+    // me there"; it should finish where it said it would.
+    current.scrollTo(top, { duration: 1.4, lock: true, onComplete: settle });
   } else {
     // The native path has no completion callback, so the wait is the CSS smooth
     // scroll's own duration with a little slack.
